@@ -8,6 +8,7 @@ import RateLimit from 'express-rate-limit';
 import RateLimitRedisStore from 'rate-limit-redis';
 import { ApolloServer } from 'apollo-server-express';
 import { fileLoader, mergeTypes, mergeResolvers } from 'merge-graphql-schemas';
+import { redisSessionPrefix } from './constants';
 import models from './models';
 import redis from './redis';
 
@@ -33,7 +34,7 @@ app.use(
 app.use(
   session({
     name: 'qid',
-    store: new RedisStore({ client: redis, prefix: 'sess:' }),
+    store: new RedisStore({ client: redis, prefix: redisSessionPrefix }),
     secret: process.env.SECRET,
     resave: false,
     saveUninitialized: false,
@@ -50,6 +51,7 @@ const server = new ApolloServer({
   resolvers,
   context: ({ req }) => ({
     req,
+    redis,
     models,
   }),
 });

@@ -1,9 +1,14 @@
+import uuid from 'uuid/v4';
 import bcrypt from 'bcrypt';
 
 export default (sequelize, DataTypes) => {
   const User = sequelize.define(
     'user',
     {
+      id: {
+        type: DataTypes.UUID,
+        primaryKey: true,
+      },
       email: {
         type: DataTypes.STRING,
         unique: {
@@ -31,8 +36,8 @@ export default (sequelize, DataTypes) => {
       hooks: {
         beforeCreate: async user => {
           const hashedPassword = await bcrypt.hash(user.password, 12);
-          // eslint-disable-next-line no-param-reassign
           user.password = hashedPassword;
+          user.id = uuid();
         },
       },
     }

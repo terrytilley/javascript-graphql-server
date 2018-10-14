@@ -46,18 +46,30 @@ app.use(
   })
 );
 
+const context = async ({ req }) => {
+  const user = await models.User.findById(req.session.userId);
+  const role = user && user.role;
+
+  return {
+    req,
+    user,
+    role,
+    redis,
+    models,
+    session: req.session,
+  };
+};
+
+const formatError = error => {
+  delete error.extensions.exception;
+  return error;
+};
+
 const server = new ApolloServer({
   typeDefs,
   resolvers,
-  context: ({ req }) => ({
-    req,
-    redis,
-    models,
-  }),
-  formatError: error => {
-    delete error.extensions.exception;
-    return error;
-  },
+  context,
+  formatError,
 });
 
 server.applyMiddleware({ app });

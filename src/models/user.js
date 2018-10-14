@@ -31,6 +31,10 @@ export default (sequelize, DataTypes) => {
           },
         },
       },
+      role: {
+        type: DataTypes.ENUM('user', 'admin'),
+        defaultValue: 'user',
+      },
       locked: {
         type: DataTypes.BOOLEAN,
         defaultValue: false,

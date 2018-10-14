@@ -1,21 +1,31 @@
 import bcrypt from 'bcrypt';
+import { AuthenticationError } from 'apollo-server-express';
 import removeAllUserSessions from '../utils/removeAllUserSessions';
 
 export default {
   Mutation: {
     async register(_, { email, password }, { models }) {
-      await models.User.create({ email, password });
-      return true;
+      try {
+        return await models.User.create({ email, password });
+      } catch (err) {
+        return err;
+      }
     },
     async login(_, { email, password }, { req, models }) {
-      const user = await models.User.findOne({ where: { email } });
-      if (!user) return null;
+      const errorMessage = 'Wrong email or password';
 
-      const validPassword = await bcrypt.compare(password, user.password);
-      if (!validPassword) return null;
+      try {
+        const user = await models.User.findOne({ where: { email } });
+        if (!user) throw new AuthenticationError(errorMessage);
 
-      req.session.userId = user.id;
-      return user;
+        const validPassword = await bcrypt.compare(password, user.password);
+        if (!validPassword) throw new AuthenticationError(errorMessage);
+
+        req.session.userId = user.id;
+        return user;
+      } catch (err) {
+        return err;
+      }
     },
     async logout(_, __, { req, redis }) {
       const { userId } = req.session;

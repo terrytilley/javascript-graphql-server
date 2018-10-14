@@ -20,6 +20,8 @@ export default {
       const redisKey = `${forgotPasswordPrefix}${key}`;
       const userId = await redis.get(redisKey);
 
+      if (!userId) throw new Error('Key has expired');
+
       const passwordSchema = yup.object().shape({
         newPassword: yup
           .string()
@@ -27,24 +29,10 @@ export default {
           .max(255),
       });
 
-      if (!userId) {
-        return [
-          {
-            path: 'key',
-            message: 'Key has expired',
-          },
-        ];
-      }
-
       try {
         await passwordSchema.validate({ newPassword });
       } catch (err) {
-        return [
-          {
-            path: err.path,
-            message: err.message,
-          },
-        ];
+        return err;
       }
 
       const hashedPassword = await bcrypt.hash(newPassword, 12);
@@ -55,7 +43,7 @@ export default {
       );
 
       await Promise.all([updatePromise, deleteKeyPromise]);
-      return null;
+      return true;
     },
   },
 };

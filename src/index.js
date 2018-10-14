@@ -54,6 +54,10 @@ const server = new ApolloServer({
     redis,
     models,
   }),
+  formatError: error => {
+    delete error.extensions.exception;
+    return error;
+  },
 });
 
 server.applyMiddleware({ app });

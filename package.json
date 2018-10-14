@@ -7,8 +7,12 @@
     "start": "babel-node src/index.js",
     "dev": "nodemon --exec babel-node src/index.js",
     "lint": "eslint src",
-    "lint:fix": "eslint src --fix",
-    "precommit": "lint-staged"
+    "lint:fix": "eslint src --fix"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
   },
   "lint-staged": {
     "*.{js, css, json}": [

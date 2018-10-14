@@ -51,7 +51,7 @@ export default {
 
       return false;
     },
-    forgotPassword: async (_, { email }, { models, redis }) => {
+    async forgotPassword(_, { email }, { models, redis }) {
       const user = await models.User.findOne({ where: { email } });
       if (!user) return false;
 
@@ -61,7 +61,7 @@ export default {
 
       return true;
     },
-    resetPassword: async (_, { newPassword, key }, { models, redis }) => {
+    async resetPassword(_, { newPassword, key }, { models, redis }) {
       const redisKey = `${forgotPasswordPrefix}${key}`;
       const userId = await redis.get(redisKey);
 

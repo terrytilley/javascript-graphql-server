@@ -1,11 +1,13 @@
 import bcrypt from 'bcrypt';
 import { AuthenticationError } from 'apollo-server-express';
 import removeAllUserSessions from '../utils/removeAllUserSessions';
+import userValidation from '../validation/user';
 
 export default {
   Mutation: {
     async register(_, { email, password }, { models }) {
       try {
+        await userValidation.validate({ email, password });
         return await models.User.create({ email, password });
       } catch (err) {
         return err;
@@ -15,6 +17,8 @@ export default {
       const errorMessage = 'Wrong email or password';
 
       try {
+        await userValidation.validate({ email, password });
+
         const user = await models.User.findOne({ where: { email } });
         if (!user) throw new AuthenticationError(errorMessage);
 

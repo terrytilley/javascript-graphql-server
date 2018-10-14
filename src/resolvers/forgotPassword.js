@@ -1,6 +1,6 @@
-import * as yup from 'yup';
 import bcrypt from 'bcrypt';
 import { forgotPasswordPrefix } from '../constants';
+import userValidation from '../validation/user';
 import createForgotPasswordLink from '../utils/createForgotPasswordLink';
 import forgotPasswordLockAccount from '../utils/forgotPasswordLockAccount';
 
@@ -22,15 +22,8 @@ export default {
 
       if (!userId) throw new Error('Key has expired');
 
-      const passwordSchema = yup.object().shape({
-        newPassword: yup
-          .string()
-          .min(8, 'password must be at least 8 characters')
-          .max(255),
-      });
-
       try {
-        await passwordSchema.validate({ newPassword });
+        await userValidation.validate({ password: newPassword });
       } catch (err) {
         return err;
       }

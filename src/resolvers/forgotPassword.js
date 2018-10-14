@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import { forgotPasswordPrefix } from '../constants';
-import userValidation from '../validation/user';
+import { passwordValidation } from '../validation/user';
 import createForgotPasswordLink from '../utils/createForgotPasswordLink';
 import forgotPasswordLockAccount from '../utils/forgotPasswordLockAccount';
 
@@ -23,7 +23,7 @@ export default {
       if (!userId) throw new Error('Key has expired');
 
       try {
-        await userValidation.validate({ password: newPassword });
+        await passwordValidation.validate({ password: newPassword });
       } catch (err) {
         return err;
       }

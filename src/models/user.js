@@ -31,6 +31,11 @@ export default (sequelize, DataTypes) => {
           },
         },
       },
+      locked: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+        allowNull: false,
+      },
     },
     {
       hooks: {

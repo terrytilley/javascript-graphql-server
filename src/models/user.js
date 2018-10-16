@@ -35,6 +35,11 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.ENUM('user', 'admin'),
         defaultValue: 'user',
       },
+      confirmed: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+        allowNull: false,
+      },
       locked: {
         type: DataTypes.BOOLEAN,
         defaultValue: false,

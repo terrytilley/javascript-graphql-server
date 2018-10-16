@@ -1,17 +1,23 @@
 import bcrypt from 'bcrypt';
 import { AuthenticationError } from 'apollo-server-express';
 import userValidation, { passwordValidation } from '../validation/user';
+import createConfirmEmailLink from '../utils/createConfirmEmailLink';
 import createForgotPasswordLink from '../utils/createForgotPasswordLink';
 import forgotPasswordLockAccount from '../utils/forgotPasswordLockAccount';
 import removeAllUserSessions from '../utils/removeAllUserSessions';
-import { forgotPasswordPrefix } from '../constants';
+import { confirmEmailPrefix, forgotPasswordPrefix } from '../constants';
 
 export default {
   Mutation: {
-    async register(_, { email, password }, { models }) {
+    async register(_, { email, password }, { models, redis }) {
       try {
         await userValidation.validate({ email, password });
-        return await models.User.create({ email, password });
+
+        const user = await models.User.create({ email, password });
+        await createConfirmEmailLink('', user.id, redis);
+        // @todo: Send email with url
+
+        return user;
       } catch (err) {
         return err;
       }
@@ -27,6 +33,9 @@ export default {
 
         const validPassword = await bcrypt.compare(password, user.password);
         if (!validPassword) throw new AuthenticationError(errorMessage);
+
+        if (!user.confirmed)
+          throw new AuthenticationError('Confirm your email');
 
         req.session.userId = user.id;
         return user;
@@ -50,6 +59,26 @@ export default {
       }
 
       return false;
+    },
+    async confirmEmail(_, { key }, { models, redis }) {
+      const redisKey = `${confirmEmailPrefix}${key}`;
+      const userId = await redis.get(redisKey);
+
+      if (!userId) throw new Error('Key has expired');
+
+      try {
+        await models.User.update(
+          { confirmed: true },
+          { where: { id: userId } }
+        );
+
+        const user = await models.User.findById(userId);
+        if (user && user.confirmed) return true;
+
+        return false;
+      } catch (err) {
+        return err;
+      }
     },
     async forgotPassword(_, { email }, { models, redis }) {
       const user = await models.User.findOne({ where: { email } });

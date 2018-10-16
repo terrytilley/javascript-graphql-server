@@ -1,10 +1,10 @@
 import bcrypt from 'bcrypt';
 import { AuthenticationError } from 'apollo-server-express';
-import userValidation, { passwordValidation } from '../validation/user';
-import createConfirmEmailLink from '../utils/createConfirmEmailLink';
-import createForgotPasswordLink from '../utils/createForgotPasswordLink';
-import forgotPasswordLockAccount from '../utils/forgotPasswordLockAccount';
+
+import createEmailLink from '../utils/createEmailLink';
 import removeAllUserSessions from '../utils/removeAllUserSessions';
+import forgotPasswordLockAccount from '../utils/forgotPasswordLockAccount';
+import userValidation, { passwordValidation } from '../validation/user';
 import { confirmEmailPrefix, forgotPasswordPrefix } from '../constants';
 
 export default {
@@ -14,7 +14,12 @@ export default {
         await userValidation.validate({ email, password });
 
         const user = await models.User.create({ email, password });
-        await createConfirmEmailLink('', user.id, redis);
+        await createEmailLink(
+          '/confirm-email',
+          confirmEmailPrefix,
+          user.id,
+          redis
+        );
         // @todo: Send email with url
 
         return user;
@@ -85,7 +90,12 @@ export default {
       if (!user) return false;
 
       await forgotPasswordLockAccount(user.id, redis);
-      await createForgotPasswordLink('', user.id, redis);
+      await createEmailLink(
+        '/reset-password',
+        forgotPasswordPrefix,
+        user.id,
+        redis
+      );
       // @todo: Send email with url
 
       return true;

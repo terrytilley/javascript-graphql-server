@@ -5,7 +5,11 @@ import createEmailLink from '../utils/createEmailLink';
 import removeAllUserSessions from '../utils/removeAllUserSessions';
 import forgotPasswordLockAccount from '../utils/forgotPasswordLockAccount';
 import userValidation, { passwordValidation } from '../validation/user';
-import { confirmEmailPrefix, forgotPasswordPrefix } from '../constants';
+import {
+  confirmEmailPrefix,
+  forgotPasswordPrefix,
+  userSessionIdPrefix,
+} from '../constants';
 
 export default {
   Mutation: {
@@ -27,7 +31,7 @@ export default {
         return err;
       }
     },
-    async login(_, { email, password }, { req, models }) {
+    async login(_, { email, password }, { req, models, session, redis }) {
       const errorMessage = 'Wrong email or password';
 
       try {
@@ -39,10 +43,20 @@ export default {
         const validPassword = await bcrypt.compare(password, user.password);
         if (!validPassword) throw new AuthenticationError(errorMessage);
 
-        if (!user.confirmed)
+        if (!user.confirmed) {
           throw new AuthenticationError('Confirm your email');
+        }
 
-        req.session.userId = user.id;
+        if (user.locked) {
+          throw new AuthenticationError('Account locked');
+        }
+
+        session.userId = user.id;
+
+        if (req.sessionID) {
+          await redis.lpush(`${userSessionIdPrefix}${user.id}`, req.sessionID);
+        }
+
         return user;
       } catch (err) {
         return err;

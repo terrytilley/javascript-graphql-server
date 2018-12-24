@@ -7,8 +7,6 @@ export default async (userId, redis) => {
     -1
   );
 
-  console.log({ sessionIds });
-
   const promises = [];
 
   for (let i = 0; i < sessionIds.length; i += 1) {

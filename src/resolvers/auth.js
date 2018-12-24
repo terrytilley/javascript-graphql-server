@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
 import { AuthenticationError } from 'apollo-server-express';
 
+import sendEmail from '../utils/sendEmail';
 import createEmailLink from '../utils/createEmailLink';
 import removeAllUserSessions from '../utils/removeAllUserSessions';
 import forgotPasswordLockAccount from '../utils/forgotPasswordLockAccount';
@@ -18,13 +19,19 @@ export default {
         await userValidation.validate({ email, password });
 
         const user = await models.User.create({ email, password });
-        await createEmailLink(
+        const link = await createEmailLink(
           '/confirm-email',
           confirmEmailPrefix,
           user.id,
           redis
         );
-        // @todo: Send email with url
+
+        sendEmail({
+          from: process.env.EMAIL_ADDRESS,
+          to: email,
+          subject: 'Confirm Email',
+          html: `<p>${link}</p>`,
+        });
 
         return user;
       } catch (err) {
@@ -104,13 +111,20 @@ export default {
       if (!user) return false;
 
       await forgotPasswordLockAccount(user.id, redis);
-      await createEmailLink(
+
+      const link = await createEmailLink(
         '/reset-password',
         forgotPasswordPrefix,
         user.id,
         redis
       );
-      // @todo: Send email with url
+
+      sendEmail({
+        from: process.env.EMAIL_ADDRESS,
+        to: email,
+        subject: 'Reset Password',
+        html: `<p>${link}</p>`,
+      });
 
       return true;
     },
